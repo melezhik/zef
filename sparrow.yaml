@@ -1,0 +1,9 @@
+tasks:
+  -
+    name: test
+    language: Bash
+    default: true
+    code: |
+      set -e
+      cd source
+      raku -I. bin/zef test .
