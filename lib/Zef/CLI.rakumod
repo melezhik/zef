@@ -804,7 +804,7 @@ package Zef::CLI {
     multi sub MAIN('info', $identity, :$update, Int :$wrap = False) {
         my $client = get-client(:config($CONFIG), :$update);
         my $latest-installed-candi = $client.resolve($identity).head;
-        my @remote-candis = $client.search($identity, :strict, :max-results(1));
+        my @remote-candis = $client.find-candidates($identity, :strict);
         abort "!!!> Found no candidates matching identity: {$identity}"
             unless $latest-installed-candi || +@remote-candis;
 
@@ -974,7 +974,7 @@ package Zef::CLI {
         my $client  = get-client(:config($CONFIG), :update(@names || Bool::True));
 
         if $verbosity >= VERBOSE {
-            my $plugins := $client.recommendation-manager.plugins(|@names).map(*.Slip).grep(*.defined);
+            my $plugins := $client.recommendation-manager.plugins(|@names).map(*.List).flat.grep(*.defined);
             my $rows    := $plugins.map({ [.id, .available.elems] });
             print-table( [["Content Storage", "Distribution Count"], |$rows], wrap => True );
         }
@@ -1137,7 +1137,7 @@ package Zef::CLI {
         # get/remove --config-path=xxx
         # MUTATES @*ARGS
         my Str $config-path-from-args;
-        for |@args.flatmap(*.split(/\=/, 2)).rotor(2 => -1, :partial) {
+        for |@args.map(*.split(/\=/, 2)).flat.rotor(2 => -1, :partial) {
             $config-path-from-args = ~$_[1] if $_[0] eq '--config-path' && $_[1];
             LAST {
                 @*ARGS = eager gather for |@args.kv -> $key, $value {
